@@ -21,15 +21,13 @@
             <li><a href="tournois.html">TOURNOIS</a></li>
             <li><a href="recrutement.html">RECRUTEMENT</a></li>
             <li><a href="shop.html">SHOP</a></li>
+            <li><a href="#" id="adminLoginIcon" title="Administration"><i class="fas fa-user-shield admin-icon"></i></a></li>
         </ul>
     </nav>
     <section>
         <div class="hero">
             <div class="hero-badge">🔥 FORTNITE COMPETITIVE TEAM 🔥</div>
-            
-            <!-- IMAGE AGRANDIE -->
             <img src="JSKONtop.png" alt="JAYSKORP ESPORT" style="max-width: 500px; width: 100%; height: auto; margin-bottom: 30px; filter: drop-shadow(0 0 15px rgba(230, 57, 70, 0.4));">
-            
             <h2>UNE STRUCTURE<br>BÂTIE POUR GAGNER</h2>
             <p>La Jayskorp est bien plus qu'une équipe. C'est une mentalité. Ici, la détermination n'est pas une option — c'est une exigence. Notre structure réunit des individus ambitieux, compétitifs et engagés, prêts à élever leur niveau à chaque compétition Fortnite.</p>
             <p>Nous croyons que la rigueur, le collectif et l'ambition sont les seuls raccourcis vers le sommet. Le chemin vers l'Excellence est ouvert. À toi de le saisir.</p>
@@ -51,5 +49,18 @@
         <div class="footer-col"><p>© 2025 La Jayskorp.<br>Détermination. Excellence.</p></div>
     </footer>
 </div>
+<script>
+    document.getElementById('adminLoginIcon').addEventListener('click', function(e) {
+        e.preventDefault();
+        const username = prompt("Nom d'utilisateur:");
+        const password = prompt("Mot de passe:");
+        if (username === "admin" && password === "admin") {
+            localStorage.setItem('adminLoggedIn', 'true');
+            window.location.href = 'admin-panel.html';
+        } else {
+            alert("Identifiants incorrects !");
+        }
+    });
+</script>
 </body>
 </html>
