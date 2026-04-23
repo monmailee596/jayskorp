@@ -19,14 +19,40 @@
         .news-item-content { flex: 1; }
         .news-item-title { font-weight: bold; font-size: 1.1rem; }
         .news-item-date { color: #ff5e5e; font-size: 0.8rem; }
-        .delete-btn { background: #b3002d; border: none; padding: 8px 15px; border-radius: 40px; color: white; cursor: pointer; }
+        .delete-btn, .edit-btn { background: #b3002d; border: none; padding: 8px 15px; border-radius: 40px; color: white; cursor: pointer; margin-left: 8px; }
+        .edit-btn { background: #e67e22; }
         .delete-btn:hover { background: #ff3a3a; }
+        .edit-btn:hover { background: #f39c12; }
         .logout-btn { background: transparent; border: 1px solid #e63946; padding: 10px 20px; border-radius: 40px; color: #ff5e5e; cursor: pointer; }
         .success-msg { background: rgba(0, 200, 0, 0.2); border: 1px solid green; padding: 10px; border-radius: 12px; margin-bottom: 20px; }
         .error-msg { background: rgba(200, 0, 0, 0.2); border: 1px solid #ff3a3a; padding: 10px; border-radius: 12px; margin-bottom: 20px; }
         .btn-primary { background: linear-gradient(95deg, #e03a3a, #9e0000); color: white; border: none; padding: 12px 24px; border-radius: 40px; cursor: pointer; font-family: 'Orbitron', monospace; font-weight: bold; }
         .btn-primary:hover { background: linear-gradient(95deg, #ff4d4d, #b00000); }
         .loading { text-align: center; padding: 40px; color: #ff8888; }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #0a0505;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid #e63946;
+        }
+        .modal-content h3 { font-family: 'Orbitron'; margin-bottom: 20px; }
+        .modal-content input, .modal-content textarea { width: 100%; margin-bottom: 15px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .close-modal { background: #555; }
     </style>
 </head>
 <body>
@@ -68,12 +94,27 @@
     </div>
 </div>
 
+<!-- Modal d'édition -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3><i class="fas fa-edit"></i> Modifier l'actualité</h3>
+        <input type="text" id="editTitle" placeholder="Titre">
+        <input type="text" id="editDate" placeholder="Date">
+        <textarea id="editContent" placeholder="Contenu" rows="4"></textarea>
+        <div class="modal-buttons">
+            <button class="close-modal btn-outline" onclick="closeModal()">Annuler</button>
+            <button class="btn-primary" onclick="saveEdit()">Enregistrer</button>
+        </div>
+    </div>
+</div>
+
 <script>
     if (localStorage.getItem('adminLoggedIn') !== 'true') {
         window.location.href = 'admin-login.html';
     }
 
     let newsItems = [];
+    let editIndex = -1;
 
     async function loadNews() {
         try {
@@ -105,13 +146,47 @@
                     <div class="news-item-date">${escapeHtml(item.date)}</div>
                     <div style="font-size:0.85rem; margin-top:5px;">${escapeHtml(item.content.substring(0, 100))}${item.content.length > 100 ? '...' : ''}</div>
                 </div>
-                <button class="delete-btn" onclick="deleteNews(${i})"><i class="fas fa-trash"></i> Supprimer</button>
+                <div>
+                    <button class="edit-btn" onclick="openEditModal(${i})"><i class="fas fa-pencil-alt"></i> Modifier</button>
+                    <button class="delete-btn" onclick="deleteNews(${i})"><i class="fas fa-trash"></i> Supprimer</button>
+                </div>
             `;
             container.appendChild(div);
         }
     }
 
-    async function addNews() {
+    function openEditModal(index) {
+        editIndex = index;
+        const item = newsItems[index];
+        document.getElementById('editTitle').value = item.title;
+        document.getElementById('editDate').value = item.date;
+        document.getElementById('editContent').value = item.content;
+        document.getElementById('editModal').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('editModal').style.display = 'none';
+        editIndex = -1;
+    }
+
+    function saveEdit() {
+        const title = document.getElementById('editTitle').value.trim();
+        const date = document.getElementById('editDate').value.trim();
+        const content = document.getElementById('editContent').value.trim();
+        
+        if (!title || !content) {
+            showMessage('Veuillez remplir tous les champs', 'error');
+            return;
+        }
+        
+        newsItems[editIndex] = { title, date, content };
+        saveToLocalStorage();
+        displayNews();
+        closeModal();
+        showMessage('✅ Actualité modifiée avec succès !', 'success');
+    }
+
+    function addNews() {
         const title = document.getElementById('newsTitle').value.trim();
         const date = document.getElementById('newsDate').value.trim();
         const content = document.getElementById('newsContent').value.trim();
@@ -121,10 +196,8 @@
             return;
         }
         
-        const newNews = { title, date, content };
-        newsItems.unshift(newNews);
-        
-        await saveNewsToGitHub();
+        newsItems.unshift({ title, date, content });
+        saveToLocalStorage();
         displayNews();
         
         document.getElementById('newsTitle').value = '';
@@ -133,40 +206,36 @@
         showMessage('✅ Actualité ajoutée avec succès !', 'success');
     }
 
-    async function deleteNews(index) {
+    function deleteNews(index) {
         if (confirm('Supprimer cette actualité ?')) {
             newsItems.splice(index, 1);
-            await saveNewsToGitHub();
+            saveToLocalStorage();
             displayNews();
             showMessage('✅ Actualité supprimée', 'success');
         }
     }
 
-    async function saveNewsToGitHub() {
-        const content = JSON.stringify(newsItems, null, 2);
-        const encodedContent = btoa(unescape(encodeURIComponent(content)));
-        
-        // Obtenir le SHA du fichier actuel
-        const fileResponse = await fetch('https://api.github.com/repos/monnailee596/jayskorp/contents/news.json');
-        const fileData = await fileResponse.json();
-        const sha = fileData.sha;
-        
-        const response = await fetch('https://api.github.com/repos/monnailee596/jayskorp/contents/news.json', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'token ' + prompt("Entrez votre token GitHub (généré sur https://github.com/settings/tokens) avec accès repo:")
-            },
-            body: JSON.stringify({
-                message: "Mise à jour des actualités",
-                content: encodedContent,
-                sha: sha
-            })
-        });
-        
-        if (!response.ok) {
-            throw new Error('Erreur de sauvegarde');
+    function saveToLocalStorage() {
+        localStorage.setItem('jayskorp_news', JSON.stringify(newsItems));
+        regenerateActualitesPage();
+    }
+
+    function regenerateActualitesPage() {
+        let newsHtml = '';
+        for (let i = 0; i < newsItems.length; i++) {
+            const item = newsItems[i];
+            newsHtml += `
+            <div class="news-card">
+                <div class="news-date">${escapeHtml(item.date)}</div>
+                <h3>${escapeHtml(item.title)}</h3>
+                <p>${escapeHtml(item.content)}</p>
+                <a href="#" class="readmore">LIRE LA SUITE <i class="fas fa-arrow-right"></i></a>
+            </div>
+            `;
         }
+        
+        // Stocker dans localStorage pour actualites.html
+        localStorage.setItem('jayskorp_news_html', newsHtml);
     }
 
     function showMessage(msg, type) {
