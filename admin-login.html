@@ -61,9 +61,9 @@
     <div class="login-container">
         <i class="fas fa-lock" style="font-size: 3rem; color: #e63946; margin-bottom: 20px;"></i>
         <h2 style="font-family: 'Orbitron';">Accès Admin</h2>
-        <p>Entrez vos identifiants pour accéder au panneau d'administration.</p>
-        <input type="text" id="adminUsername" placeholder="Nom d'utilisateur" value="admin">
-        <input type="password" id="adminPassword" placeholder="Mot de passe" value="admin">
+        <p>Entrez vos identifiants</p>
+        <input type="text" id="adminUsername" placeholder="Nom d'utilisateur">
+        <input type="password" id="adminPassword" placeholder="Mot de passe">
         <button class="btn-primary" onclick="checkLogin()">Se connecter</button>
         <div id="errorMsg" class="error-msg"></div>
         <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Retour au site</a>
@@ -71,7 +71,6 @@
 </div>
 
 <script>
-    // 🔐 Identifiants admin
     const ADMIN_USERNAME = "admin";
     const ADMIN_PASSWORD = "admin";
     
@@ -84,7 +83,7 @@
             localStorage.setItem('adminLoggedIn', 'true');
             window.location.href = 'admin-panel.html';
         } else {
-            errorDiv.innerHTML = '❌ Identifiant ou mot de passe incorrect. Accès refusé.';
+            errorDiv.innerHTML = '❌ Identifiant ou mot de passe incorrect.';
         }
     }
 </script>
