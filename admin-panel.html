@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JAYSKORP | Panneau Admin</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Inter:opsz,wght@14..32,300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-container {
+            max-width: 900px;
+            margin: 40px auto;
+        }
+        .admin-card {
+            background: rgba(10, 0, 0, 0.85);
+            border-radius: 24px;
+            padding: 30px;
+            border: 1px solid #b91c1c;
+            margin-bottom: 30px;
+        }
+        .admin-card h3 {
+            font-family: 'Orbitron';
+            margin-bottom: 20px;
+            color: #e63946;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .form-group input, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: #1a0a0a;
+            border: 1px solid #b3002d;
+            border-radius: 12px;
+            color: white;
+            font-family: inherit;
+        }
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        .news-item {
+            background: #0a0505;
+            border: 1px solid #b3002d;
+            border-radius: 16px;
+            padding: 15px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        .news-item-content {
+            flex: 1;
+        }
+        .news-item-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .news-item-date {
+            color: #ff5e5e;
+            font-size: 0.8rem;
+        }
+        .delete-btn {
+            background: #b3002d;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background: #ff3a3a;
+        }
+        .logout-btn {
+            background: transparent;
+            border: 1px solid #e63946;
+            padding: 10px 20px;
+            border-radius: 40px;
+            color: #ff5e5e;
+            cursor: pointer;
+        }
+        .success-msg {
+            background: rgba(0, 200, 0, 0.2);
+            border: 1px solid green;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .error-msg {
+            background: rgba(200, 0, 0, 0.2);
+            border: 1px solid #ff3a3a;
+            padding: 10px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background: linear-gradient(95deg, #e03a3a, #9e0000);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            cursor: pointer;
+            font-family: 'Orbitron', monospace;
+            font-weight: bold;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(95deg, #ff4d4d, #b00000);
+        }
+    </style>
+</head>
+<body>
+<div class="bg-red-dark"></div>
+<div class="container">
+    <nav class="navbar">
+        <div class="logo"><h1>JAYSKORP - ADMIN</h1></div>
+        <ul class="nav-links">
+            <li><a href="index.html">ACCUEIL</a></li>
+            <li><a href="actualites.html">ACTUALITÉS</a></li>
+            <li><button class="logout-btn" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Déconnexion</button></li>
+        </ul>
+    </nav>
+
+    <div class="admin-container">
+        <div id="msgContainer"></div>
+        
+        <div class="admin-card">
+            <h3><i class="fas fa-plus-circle"></i> Ajouter une actualité</h3>
+            <div class="form-group">
+                <label>Titre</label>
+                <input type="text" id="newsTitle" placeholder="Ex: Nouvelle victoire en FNCS !">
+            </div>
+            <div class="form-group">
+                <label>Date</label>
+                <input type="text" id="newsDate" placeholder="Ex: 15 DECEMBRE 2026" value="15 DECEMBRE 2026">
+            </div>
+            <div class="form-group">
+                <label>Contenu</label>
+                <textarea id="newsContent" placeholder="Décrivez l'actualité..."></textarea>
+            </div>
+            <button class="btn-primary" onclick="addNews()">Publier l'actualité</button>
+        </div>
+
+        <div class="admin-card">
+            <h3><i class="fas fa-list"></i> Actualités existantes</h3>
+            <div id="newsList"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Vérifier si l'admin est connecté
+    if (localStorage.getItem('adminLoggedIn') !== 'true') {
+        window.location.href = 'admin-login.html';
+    }
+
+    let newsItems = [];
+
+    function loadNews() {
+        const saved = localStorage.getItem('jayskorp_news');
+        if (saved) {
+            newsItems = JSON.parse(saved);
+        } else {
+            newsItems = [
+                {
+                    title: "LA JAYSKORP EST OFFICIELLEMENT LANCÉE",
+                    date: "14 AVRIL 2026",
+                    content: "Après des mois de préparation, notre structure ouvre ses portes. Rejoignez l'aventure Fortnite compétitive."
+                },
+                {
+                    title: "TRYOUTS : 150 PR EU MINIMUM",
+                    date: "22 MAI 2026",
+                    content: "Les qualifications pour le roster principal sont ouvertes. Condition : 150 PR EU. Postule via le formulaire."
+                },
+                {
+                    title: "MAP 1V1 JSK DISPONIBLE",
+                    date: "10 JUIN 2026",
+                    content: "La map officielle est en ligne ! Code: 5365-4366-5785. Testez-la et donnez vos retours."
+                }
+            ];
+            saveNews();
+        }
+        displayNews();
+        updateActualitesPage();
+    }
+
+    function saveNews() {
+        localStorage.setItem('jayskorp_news', JSON.stringify(newsItems));
+        updateActualitesPage();
+    }
+
+    function displayNews() {
+        const container = document.getElementById('newsList');
+        if (!container) return;
+        
+        if (newsItems.length === 0) {
+            container.innerHTML = '<p style="color:#888;">Aucune actualité. Ajoutez-en une !</p>';
+            return;
+        }
+        
+        container.innerHTML = '';
+        for (let i = 0; i < newsItems.length; i++) {
+            const item = newsItems[i];
+            const div = document.createElement('div');
+            div.className = 'news-item';
+            div.innerHTML = `
+                <div class="news-item-content">
+                    <div class="news-item-title">${escapeHtml(item.title)}</div>
+                    <div class="news-item-date">${escapeHtml(item.date)}</div>
+                    <div style="font-size:0.85rem; margin-top:5px;">${escapeHtml(item.content.substring(0, 100))}${item.content.length > 100 ? '...' : ''}</div>
+                </div>
+                <button class="delete-btn" onclick="deleteNews(${i})"><i class="fas fa-trash"></i> Supprimer</button>
+            `;
+            container.appendChild(div);
+        }
+    }
+
+    function addNews() {
+        const title = document.getElementById('newsTitle').value.trim();
+        const date = document.getElementById('newsDate').value.trim();
+        const content = document.getElementById('newsContent').value.trim();
+        
+        if (!title || !content) {
+            showMessage('Veuillez remplir le titre et le contenu.', 'error');
+            return;
+        }
+        
+        newsItems.unshift({ title, date, content });
+        saveNews();
+        displayNews();
+        
+        document.getElementById('newsTitle').value = '';
+        document.getElementById('newsContent').value = '';
+        
+        showMessage('✅ Actualité ajoutée avec succès !', 'success');
+    }
+
+    function deleteNews(index) {
+        if (confirm('Supprimer cette actualité ?')) {
+            newsItems.splice(index, 1);
+            saveNews();
+            displayNews();
+            showMessage('✅ Actualité supprimée', 'success');
+        }
+    }
+
+    function showMessage(msg, type) {
+        const container = document.getElementById('msgContainer');
+        if (!container) return;
+        container.innerHTML = `<div class="${type === 'error' ? 'error-msg' : 'success-msg'}">${msg}</div>`;
+        setTimeout(() => {
+            container.innerHTML = '';
+        }, 3000);
+    }
+
+    function updateActualitesPage() {
+        let newsHtml = '';
+        for (let i = 0; i < Math.min(newsItems.length, 6); i++) {
+            const item = newsItems[i];
+            newsHtml += `
+            <div class="news-card">
+                <div class="news-date">${escapeHtml(item.date)}</div>
+                <h3>${escapeHtml(item.title)}</h3>
+                <p>${escapeHtml(item.content)}</p>
+                <a href="#" class="readmore">LIRE LA SUITE <i class="fas fa-arrow-right"></i></a>
+            </div>
+            `;
+        }
+        localStorage.setItem('jayskorp_news_html', newsHtml);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function logout() {
+        localStorage.setItem('adminLoggedIn', 'false');
+        window.location.href = 'admin-login.html';
+    }
+
+    loadNews();
+</script>
+</body>
+</html>
